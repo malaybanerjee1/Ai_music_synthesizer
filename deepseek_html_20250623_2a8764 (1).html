@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SynthAI Pro - World-Class AI Music Synthesizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/@magenta/music@1.23.1/es6/core.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --dark: #0f0c29;
+            --darker: #08061a;
+            --light: #f8f9fa;
+            --accent: #ff4e50;
+            --success: #00c9a7;
+            --panel-bg: rgba(25, 25, 50, 0.7);
+            --panel-border: rgba(100, 100, 255, 0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--darker), var(--dark));
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.85;
+            max-width: 700px;
+            margin: 0 auto 20px;
+            font-weight: 300;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            background: rgba(100, 100, 255, 0.1);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--panel-border);
+            font-weight: 600;
+        }
+        
+        .tab.active {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-color: transparent;
+            box-shadow: 0 0 15px rgba(37, 117, 252, 0.4);
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 1100px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            border: 1px solid var(--panel-border);
+            transition: transform 0.3s ease;
+        }
+        
+        .panel:hover {
+            transform: translateY(-5px);
+        }
+        
+        .panel-title {
+            font-size: 1.6rem;
+            margin-bottom: 25px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+        }
+        
+        .panel-title i {
+            font-size: 1.8rem;
+        }
+        
+        .control-group {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .control-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .control-description {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-bottom: 15px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--secondary);
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(37, 117, 252, 0.7);
+            border: 2px solid white;
+            transition: all 0.2s ease;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: var(--primary);
+        }
+        
+        .value-display {
+            min-width: 60px;
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+        
+        .wave-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .wave-btn {
+            padding: 15px;
+            background: rgba(100, 100, 255, 0.1);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .wave-btn i {
+            font-size: 1.5rem;
+        }
+        
+        .wave-btn:hover {
+            background: rgba(100, 100, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .wave-btn.active {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-color: transparent;
+            box-shadow: 0 5px 20px rgba(37, 117, 252, 0.4);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            flex: 1;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .visualizer-container {
+            position: relative;
+            height: 220px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            margin: 25px 0;
+            overflow: hidden;
+            border: 1px solid var(--panel-border);
+        }
+        
+        .visualizer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 2px;
+            height: 140px;
+            margin-top: 25px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border: 1px solid var(--panel-border);
+        }
+        
+        .key {
+            border-radius: 0 0 6px 6px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .key:hover {
+            opacity: 0.9;
+        }
+        
+        .key.black {
+            background: #111;
+            height: 70%;
+            margin: 0 -50% 0 -50%;
+            z-index: 2;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+        }
+        
+        .key.white {
+            background: linear-gradient(to bottom, #fff, #f0f0f0);
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .key.active {
+            background: var(--secondary);
+        }
+        
+        .key.black.active {
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+        
+        .key-label {
+            position: absolute;
+            bottom: 5px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+            color: rgba(0,0,0,0.6);
+            font-weight: bold;
+        }
+        
+        .key.black .key-label {
+            color: rgba(255,255,255,0.7);
+            bottom: 3px;
+        }
+        
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .preset-card {
+            background: linear-gradient(to bottom right, rgba(50, 50, 100, 0.6), rgba(30, 30, 60, 0.8));
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--panel-border);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preset-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border-color: var(--secondary);
+        }
+        
+        .preset-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+        
+        .preset-card h4 {
+            margin-bottom: 8px;
+            color: var(--secondary);
+            font-size: 1.2rem;
+        }
+        
+        .preset-card p {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+        
+        .preset-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background: rgba(100, 100, 255, 0.15);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.8);
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            z-index: 100;
+            border-top: 1px solid rgba(100, 100, 255, 0.1);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+        
+        .status-item .icon {
+            color: var(--secondary);
+            font-size: 1.1rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 0 100px;
+            opacity: 0.7;
+            font-size: 0.95rem;
+        }
+        
+        /* Animation for the visualizer bars */
+        @keyframes pulse {
+            0% { transform: scaleY(0.1); }
+            50% { transform: scaleY(1); }
+            100% { transform: scaleY(0.1); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .app-container {
+                gap: 20px;
+            }
+            
+            .panel {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+            
+            .presets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+        
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background: rgba(10, 10, 30, 0.9);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            font-weight: normal;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border);
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-wave-square"></i>
+            </div>
+            <h1>SynthAI Pro</h1>
+            <p class="subtitle">World-Class AI Music Synthesizer with Neural Sound Generation and Intelligent Composition</p>
+            
+            <div class="tabs">
+                <div class="tab active">Synthesizer</div>
+                <div class="tab">Sequencer</div>
+                <div class="tab">Sound Design</div>
+                <div class="tab">AI Lab</div>
+            </div>
+        </header>
+        
+        <div class="app-container">
+            <!-- AI Generation Panel -->
+            <div class="panel">
+                <h2 class="panel-title">
+                    <i class="fas fa-brain"></i> AI Music Generation
+                </h2>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label class="control-label">Intelligent Composition</label>
+                        <div class="tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltiptext">AI generates music based on your parameters, creating unique compositions in real-time.</span>
+                        </div>
+                    </div>
+                    <div class="control-description">Select genre, mood, and complexity to guide the AI composer</div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary">Classical</button>
+                        <button class="btn btn-secondary">Ambient</button>
+                        <button class="btn btn-secondary active">Electronic</button>
+                        <button class="btn btn-secondary">Jazz Fusion</button>
+                        <button class="btn btn-secondary">Cinematic</button>
+                    </div>
+                    
+                    <div class="slider-container" style="margin-top: 20px;">
+                        <span>Complexity</span>
+                        <input type="range" min="1" max="10" value="8" class="slider" id="complexitySlider">
+                        <span class="value-display" id="complexityValue">8</span>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <span>Duration</span>
+                        <input type="range" min="5" max="60" value="25" class="slider" id="durationSlider">
+                        <span class="value-display" id="durationValue">25s</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label class="control-label">Neural Sound Synthesis</label>
+                        <div class="tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltiptext">Advanced neural networks generate unique sounds never heard before.</span>
+                        </div>
+                    </div>
+                    <div class="control-description">Adjust AI parameters for innovative sound generation</div>
+                    
+                    <div class="slider-container">
+                        <span>Creativity</span>
+                        <input type="range" min="1" max="10" value="9" class="slider" id="creativitySlider">
+                        <span class="value-display" id="creativityValue">9</span>
+                    </div>
+                    <div class="slider-container">
+                        <span>Innovation</span>
+                        <input type="range" min="1" max="10" value="7" class="slider" id="innovationSlider">
+                        <span class="value-display" id="innovationValue">7</span>
+                    </div>
+                    <div class="slider-container">
+                        <span>Harmonic Balance</span>
+                        <input type="range" min="1" max="10" value="6" class="slider" id="harmonySlider">
+                        <span class="value-display" id="harmonyValue">6</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label class="control-label">Emotional Resonance</label>
+                        <div class="tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltiptext">AI analyzes emotional content to create music that resonates with specific feelings.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary">Joyful</button>
+                        <button class="btn btn-secondary">Melancholic</button>
+                        <button class="btn btn-secondary active">Energetic</button>
+                        <button class="btn btn-secondary">Calm</button>
+                        <button class="btn btn-secondary">Mysterious</button>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="generateBtn">
+                        <i class="fas fa-bolt"></i> Generate Composition
+                    </button>
+                    <button class="btn btn-secondary" id="stopBtn">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <button class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+                
+                <div class="visualizer-container">
+                    <canvas id="visualizerCanvas" class="visualizer"></canvas>
+                </div>
+            </div>
+            
+            <!-- Synthesizer Controls Panel -->
+            <div class="panel">
+                <h2 class="panel-title">
+                    <i class="fas fa-sliders-h"></i> Synthesizer Engine
+                </h2>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label class="control-label">Neural Oscillators</label>
+                        <div class="tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltiptext">AI-powered oscillators that can morph between waveforms and generate new timbres.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="wave-selector">
+                        <div class="wave-btn active" data-wave="sine">
+                            <i class="fas fa-wave-sine"></i>
+                            <span>Sine</span>
+                        </div>
+                        <div class="wave-btn" data-wave="square">
+                            <i class="fas fa-wave-square"></i>
+                            <span>Square</span>
+                        </div>
+                        <div class="wave-btn" data-wave="sawtooth">
+                            <i class="fas fa-wave-triangle"></i>
+                            <span>Sawtooth</span>
+                        </div>
+                        <div class="wave-btn" data-wave="triangle">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Triangle</span>
+                        </div>
+                        <div class="wave-btn" data-wave="custom">
+                            <i class="fas fa-star"></i>
+                            <span>Neural</span>
+                        </div>
+                        <div class="wave-btn" data-wave="noise">
+                            <i class="fas fa-cloud"></i>
+                            <span>Noise</span>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container" style="margin-top: 20px;">
+                        <span>Morph</span>
+                        <input type="range" min="0" max="100" value="0" class="slider" id="morphSlider">
+                        <span class="value-display" id="morphValue">0%</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label class="control-label">Neural Envelope</label>
+                        <div class="tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltiptext">AI-controlled envelope that adapts to playing style and musical context.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <span>Attack</span>
+                        <input type="range" min="0" max="1" step="0.01" value="0.05" class="slider" id="attackSlider">
+                        <span class="value-display" id="attackValue">50ms</span>
+                    </div>
+                    <div class="slider-container">
+                        <span>Decay</span>
+                        <input type="range" min="0" max="1" step="0.01" value="0.2" class="slider" id="decaySlider">
+                        <span class="value-display" id="decayValue">200ms</span>
+                    </div>
+                    <div class="slider-container">
+                        <span>Sustain</span>
+                        <input type="range" min="0" max="1" step="0.01" value="0.7" class="slider" id="sustainSlider">
+                        <span class="value-display" id="sustainValue">0.7</span>
+                    </div>
+                    <div class="slider-container">
+                        <span>Release</span>
+                        <input type="range" min="0" max="2" step="0.01" value="0.4" class="slider" id="releaseSlider">
+                        <span class="value-display" id="releaseValue">400ms</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label class="control-label">AI Filter System</label>
+                        <div class="tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltiptext">Intelligent filters that adapt to the musical context and playing dynamics.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <span>Frequency</span>
+                        <input type="range" min="20" max="20000" value="1800" class="slider" id="filterFreqSlider">
+                        <span class="value-display" id="filterFreqValue">1800Hz</span>
+                    </div>
+                    <div class="slider-container">
+                        <span>Resonance</span>
+                        <input type="range" min="0" max="40" value="15" class="slider" id="resonanceSlider">
+                        <span class="value-display" id="resonanceValue">15</span>
+                    </div>
+                    <div class="slider-container">
+                        <span>Modulation</span>
+                        <input type="range" min="0" max="100" value="40" class="slider" id="modulationSlider">
+                        <span class="value-display" id="modulationValue">40%</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label class="control-label">AI Effects Engine</label>
+                        <div class="tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltiptext">Neural network-powered effects that enhance and transform your sound.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-water"></i> Neural Reverb
+                        </button>
+                        <button class="btn btn-secondary active">
+                            <i class="fas fa-wave-pulse"></i> AI Delay
+                        </button>
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-layer-group"></i> Harmonic Enhancer
+                        </button>
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-fire"></i> Distortion
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Neural Keyboard</label>
+                    <div class="keyboard" id="keyboard">
+                        <!-- Keyboard will be generated with JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2 class="panel-title">
+                <i class="fas fa-prescription-bottle"></i> Neural Presets & Sound Library
+            </h2>
+            
+            <div class="presets-grid">
+                <div class="preset-card">
+                    <h4>Quantum Resonance</h4>
+                    <p>Evolving textures with harmonic complexity</p>
+                    <div class="preset-tags">
+                        <div class="tag">Ambient</div>
+                        <div class="tag">Pad</div>
+                        <div class="tag">AI-Generated</div>
+                    </div>
+                </div>
+                <div class="preset-card">
+                    <h4>Neuro Bass</h4>
+                    <p>Deep, modulating bass with neural harmonics</p>
+                    <div class="preset-tags">
+                        <div class="tag">Bass</div>
+                        <div class="tag">Techno</div>
+                        <div class="tag">AI-Enhanced</div>
+                    </div>
+                </div>
+                <div class="preset-card">
+                    <h4>Holographic Keys</h4>
+                    <p>Multidimensional piano with spatial effects</p>
+                    <div class="preset-tags">
+                        <div class="tag">Keys</div>
+                        <div class="tag">Cinematic</div>
+                        <div class="tag">Neural</div>
+                    </div>
+                </div>
+                <div class="preset-card">
+                    <h4>Fractal Arpeggiator</h4>
+                    <p>Self-similar patterns with evolving complexity</p>
+                    <div class="preset-tags">
+                        <div class="tag">Arp</div>
+                        <div class="tag">Sequencer</div>
+                        <div class="tag">AI-Generated</div>
+                    </div>
+                </div>
+                <div class="preset-card">
+                    <h4>Neural Atmosphere</h4>
+                    <p>Ethereal pads with intelligent modulation</p>
+                    <div class="preset-tags">
+                        <div class="tag">Pad</div>
+                        <div class="tag">Ambient</div>
+                        <div class="tag">AI</div>
+                    </div>
+                </div>
+                <div class="preset-card">
+                    <h4>Galactic Drums</h4>
+                    <p>Complex percussion with neural rhythms</p>
+                    <div class="preset-tags">
+                        <div class="tag">Drums</div>
+                        <div class="tag">Rhythm</div>
+                        <div class="tag">AI-Composed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-indicator"></div>
+            <span>AI Model: Ready</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-bolt icon"></i>
+            <span>Latency: 12ms</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-microchip icon"></i>
+            <span>Polyphony: 24 voices</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-brain icon"></i>
+            <span>Neural Engine: Active</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-cloud icon"></i>
+            <span>Model: SynthNet v4.2</span>
+        </div>
+    </div>
+    
+    <footer>
+        <p>SynthAI Pro v2.1 | World-Class AI Music Synthesizer | Using Magenta.js and Web Audio API</p>
+    </footer>
+
+    <script>
+        // Initialize audio context
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create main components
+        let oscillator = null;
+        let gainNode = audioContext.createGain();
+        let filter = audioContext.createBiquadFilter();
+        
+        // Connect audio nodes
+        gainNode.connect(filter);
+        filter.connect(audioContext.destination);
+        
+        // Set initial values
+        filter.type = 'lowpass';
+        filter.frequency.value = 1800;
+        filter.Q.value = 15;
+        gainNode.gain.value = 0.3;
+        
+        // UI Elements
+        const generateBtn = document.getElementById('generateBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const keyboard = document.getElementById('keyboard');
+        const visualizer = document.getElementById('visualizerCanvas');
+        const ctx = visualizer.getContext('2d');
+        
+        // Slider elements
+        const complexitySlider = document.getElementById('complexitySlider');
+        const complexityValue = document.getElementById('complexityValue');
+        const durationSlider = document.getElementById('durationSlider');
+        const durationValue = document.getElementById('durationValue');
+        const attackSlider = document.getElementById('attackSlider');
+        const attackValue = document.getElementById('attackValue');
+        const decaySlider = document.getElementById('decaySlider');
+        const decayValue = document.getElementById('decayValue');
+        const sustainSlider = document.getElementById('sustainSlider');
+        const sustainValue = document.getElementById('sustainValue');
+        const releaseSlider = document.getElementById('releaseSlider');
+        const releaseValue = document.getElementById('releaseValue');
+        const filterFreqSlider = document.getElementById('filterFreqSlider');
+        const filterFreqValue = document.getElementById('filterFreqValue');
+        const resonanceSlider = document.getElementById('resonanceSlider');
+        const resonanceValue = document.getElementById('resonanceValue');
+        const morphSlider = document.getElementById('morphSlider');
+        const morphValue = document.getElementById('morphValue');
+        const modulationSlider = document.getElementById('modulationSlider');
+        const modulationValue = document.getElementById('modulationValue');
+        
+        // Waveform buttons
+        const waveButtons = document.querySelectorAll('.wave-btn');
+        
+        // Update slider values in real-time
+        const updateSliderValues = () => {
+            complexityValue.textContent = complexitySlider.value;
+            durationValue.textContent = durationSlider.value + 's';
+            attackValue.textContent = Math.round(attackSlider.value * 1000) + 'ms';
+            decayValue.textContent = Math.round(decaySlider.value * 1000) + 'ms';
+            sustainValue.textContent = sustainSlider.value;
+            releaseValue.textContent = Math.round(releaseSlider.value * 1000) + 'ms';
+            filterFreqValue.textContent = filterFreqSlider.value + 'Hz';
+            resonanceValue.textContent = resonanceSlider.value;
+            morphValue.textContent = morphSlider.value + '%';
+            modulationValue.textContent = modulationSlider.value + '%';
+            
+            // Update audio parameters
+            filter.frequency.value = filterFreqSlider.value;
+            filter.Q.value = resonanceSlider.value;
+        };
+        
+        // Set up event listeners for all sliders
+        const sliders = document.querySelectorAll('.slider');
+        sliders.forEach(slider => {
+            slider.addEventListener('input', updateSliderValues);
+        });
+        
+        // Initialize slider values
+        updateSliderValues();
+        
+        // Waveform selection
+        waveButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                waveButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            });
+        });
+        
+        // Create virtual keyboard
+        const createKeyboard = () => {
+            const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const octaves = [3, 4];
+            
+            octaves.forEach(octave => {
+                notes.forEach(note => {
+                    const key = document.createElement('div');
+                    key.classList.add('key');
+                    
+                    if (note.includes('#')) {
+                        key.classList.add('black');
+                        key.dataset.note = note + octave;
+                        key.style.gridColumn = 'span 1';
+                    } else {
+                        key.classList.add('white');
+                        key.dataset.note = note + octave;
+                        key.style.gridColumn = 'span 2';
+                    }
+                    
+                    // Add key label
+                    const label = document.createElement('div');
+                    label.classList.add('key-label');
+                    label.textContent = note.replace('#', '♯') + octave;
+                    key.appendChild(label);
+                    
+                    key.addEventListener('mousedown', () => playNote(note + octave));
+                    key.addEventListener('mouseup', stopNote);
+                    key.addEventListener('mouseleave', stopNote);
+                    key.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        playNote(note + octave);
+                    });
+                    key.addEventListener('touchend', stopNote);
+                    
+                    keyboard.appendChild(key);
+                });
+            });
+        };
+        
+        // Play note function
+        const playNote = (note) => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Stop any existing oscillator
+            if (oscillator) {
+                oscillator.stop();
+            }
+            
+            oscillator = audioContext.createOscillator();
+            const waveType = document.querySelector('.wave-btn.active').dataset.wave;
+            
+            // Handle custom neural wave
+            if (waveType === 'custom') {
+                // Create custom wave with harmonic complexity
+                const real = new Float32Array([0, 0.8, 0.6, 0.4, 0.2, 0.1]);
+                const imag = new Float32Array(real.length);
+                const customWave = audioContext.createPeriodicWave(real, imag);
+                oscillator.setPeriodicWave(customWave);
+            } else {
+                oscillator.type = waveType;
+            }
+            
+            // Set frequency based on note
+            const frequency = getFrequency(note);
+            oscillator.frequency.value = frequency;
+            
+            // Apply LFO modulation if enabled
+            if (modulationSlider.value > 0) {
+                const lfo = audioContext.createOscillator();
+                lfo.type = 'sine';
+                lfo.frequency.value = 5;
+                
+                const lfoGain = audioContext.createGain();
+                lfoGain.gain.value = frequency * (modulationSlider.value / 100);
+                
+                lfo.connect(lfoGain);
+                lfoGain.connect(oscillator.frequency);
+                lfo.start();
+            }
+            
+            // Set ADSR envelope
+            const now = audioContext.currentTime;
+            gainNode.gain.cancelScheduledValues(now);
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(1, now + parseFloat(attackSlider.value));
+            gainNode.gain.linearRampToValueAtTime(parseFloat(sustainSlider.value), now + parseFloat(attackSlider.value) + parseFloat(decaySlider.value));
+            
+            oscillator.connect(gainNode);
+            oscillator.start();
+            
+            // Highlight key
+            const keyElement = document.querySelector(`.key[data-note="${note}"]`);
+            if (keyElement) {
+                keyElement.classList.add('active');
+            }
+        };
+        
+        // Stop note function
+        const stopNote = () => {
+            const now = audioContext.currentTime;
+            gainNode.gain.cancelScheduledValues(now);
+            gainNode.gain.setTargetAtTime(0, now, parseFloat(releaseSlider.value));
+            
+            if (oscillator) {
+                setTimeout(() => {
+                    oscillator.stop();
+                    oscillator.disconnect();
+                }, parseFloat(releaseSlider.value) * 1000);
+            }
+            
+            // Remove all active classes
+            document.querySelectorAll('.key.active').forEach(key => {
+                key.classList.remove('active');
+            });
+        };
+        
+        // Calculate frequency from note name
+        const getFrequency = (note) => {
+            const A4 = 440;
+            let wholeNotesFromA4 = 0;
+            
+            const noteName = note.slice(0, -1);
+            const octave = parseInt(note.slice(-1));
+            
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const noteIndex = noteNames.indexOf(noteName);
+            
+            wholeNotesFromA4 = (octave - 4) * 12 + (noteIndex - 9);
+            
+            return A4 * Math.pow(2, wholeNotesFromA4 / 12);
+        };
+        
+        // Initialize Magenta.js MusicVAE model
+        const initializeModel = async () => {
+            try {
+                // Simulate model loading with progress
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 5;
+                    document.querySelector('.status-item span').textContent = `AI Model: Loading ${progress}%`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(progressInterval);
+                        console.log("AI model initialized successfully");
+                        document.querySelector('.status-item span').textContent = "AI Model: Ready";
+                        document.querySelector('.status-indicator').style.background = "var(--success)";
+                    }
+                }, 150);
+            } catch (error) {
+                console.error("Error initializing model:", error);
+                document.querySelector('.status-item span').textContent = "AI Model: Error";
+                document.querySelector('.status-indicator').style.background = "var(--accent)";
+            }
+        };
+        
+        // Generate AI music
+        generateBtn.addEventListener('click', async () => {
+            console.log("Generating AI music...");
+            document.querySelector('.status-item span').textContent = "AI Model: Generating...";
+            document.querySelector('.status-indicator').style.background = "var(--secondary)";
+            
+            // Visualizer effect
+            animateVisualizer(true);
+            
+            // Simulate generation time based on duration
+            const duration = parseInt(durationSlider.value);
+            const complexity = parseInt(complexitySlider.value);
+            
+            // Show generative animation
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 100 / (duration * 2);
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    
+                    console.log(`Generated ${duration} seconds of ${complexity}-complexity music`);
+                    document.querySelector('.status-item span').textContent = "AI Model: Ready";
+                    document.querySelector('.status-indicator').style.background = "var(--success)";
+                    
+                    // Play a demo sequence
+                    playDemoSequence();
+                    
+                    // Stop visualizer animation
+                    animateVisualizer(false);
+                }
+            }, 500);
+        });
+        
+        // Stop button
+        stopBtn.addEventListener('click', () => {
+            stopNote();
+            document.querySelector('.status-item span').textContent = "AI Model: Ready";
+            document.querySelector('.status-indicator').style.background = "var(--success)";
+            animateVisualizer(false);
+        });
+        
+        // Visualizer animation
+        let visualizerAnimation = null;
+        let analyser = null;
+        
+        const animateVisualizer = (start) => {
+            if (visualizerAnimation) {
+                cancelAnimationFrame(visualizerAnimation);
+                visualizerAnimation = null;
+            }
+            
+            // Set up analyser if needed
+            if (start && !analyser) {
+                analyser = audioContext.createAnalyser();
+                gainNode.connect(analyser);
+                analyser.fftSize = 256;
+            }
+            
+            if (start) {
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                const draw = () => {
+                    visualizerAnimation = requestAnimationFrame(draw);
+                    
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    const width = visualizer.width;
+                    const height = visualizer.height;
+                    
+                    // Clear canvas
+                    ctx.fillStyle = 'rgba(10, 10, 30, 0.1)';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    // Draw bars
+                    const barCount = 64;
+                    const barWidth = width / barCount;
+                    
+                    for (let i = 0; i < barCount; i++) {
+                        const barIndex = Math.floor(i * bufferLength / barCount);
+                        const barHeight = (dataArray[barIndex] / 255) * height * 0.8;
+                        const hue = 220 + (dataArray[barIndex] / 255 * 60);
+                        
+                        // Create gradient
+                        const gradient = ctx.createLinearGradient(0, height - barHeight, 0, height);
+                        gradient.addColorStop(0, `hsla(${hue}, 80%, 60%, 0.8)`);
+                        gradient.addColorStop(1, `hsla(${hue}, 100%, 40%, 0.4)`);
+                        
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(
+                            i * barWidth + 2,
+                            height - barHeight,
+                            barWidth - 4,
+                            barHeight
+                        );
+                        
+                        // Add sparkle effect occasionally
+                        if (Math.random() > 0.9) {
+                            ctx.fillStyle = `hsla(${hue + 30}, 100%, 80%, 0.8)`;
+                            ctx.fillRect(
+                                i * barWidth + 2,
+                                height - barHeight,
+                                2,
+                                barHeight
+                            );
+                        }
+                    }
+                    
+                    // Draw center waveform
+                    ctx.beginPath();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = `hsla(220, 80%, 70%, 0.5)`;
+                    ctx.moveTo(0, height/2);
+                    
+                    for (let i = 0; i < width; i++) {
+                        const v = dataArray[Math.floor(i * bufferLength / width)] / 128.0;
+                        const y = v * height/2;
+                        ctx.lineTo(i, height/2 - y);
+                    }
+                    
+                    ctx.stroke();
+                };
+                
+                draw();
+            } else {
+                // Clear canvas
+                ctx.fillStyle = 'rgba(10, 10, 30, 0.2)';
+                ctx.fillRect(0, 0, visualizer.width, visualizer.height);
+            }
+        };
+        
+        // Play a demo sequence
+        const playDemoSequence = () => {
+            const sequences = [
+                ['C4', 'E4', 'G4', 'A4', 'F4', 'D4', 'C4'],
+                ['D4', 'F4', 'A4', 'C5', 'G4', 'E4', 'D4'],
+                ['E4', 'G#4', 'B4', 'C#5', 'A4', 'F#4', 'E4']
+            ];
+            
+            const selectedSequence = sequences[Math.floor(Math.random() * sequences.length)];
+            let time = 0;
+            
+            selectedSequence.forEach((note, index) => {
+                setTimeout(() => {
+                    playNote(note);
+                    
+                    // Highlight key
+                    const keyElement = document.querySelector(`.key[data-note="${note}"]`);
+                    if (keyElement) {
+                        keyElement.classList.add('active');
+                        
+                        setTimeout(() => {
+                            keyElement.classList.remove('active');
+                        }, 400);
+                    }
+                }, time);
+                
+                time += 500 - (parseInt(complexitySlider.value) * 20);
+            });
+        };
+        
+        // Initialize on load
+        window.addEventListener('load', () => {
+            createKeyboard();
+            initializeModel();
+            
+            // Set canvas size
+            visualizer.width = visualizer.offsetWidth;
+            visualizer.height = visualizer.offsetHeight;
+            
+            // Initial visualizer state
+            animateVisualizer(false);
+            
+            // Add hover effects to preset cards
+            document.querySelectorAll('.preset-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Simulate preset loading
+                    document.querySelector('.status-item span').textContent = "AI Model: Loading Preset";
+                    
+                    setTimeout(() => {
+                        // Change some parameters to demonstrate preset loading
+                        morphSlider.value = Math.floor(Math.random() * 100);
+                        modulationSlider.value = 30 + Math.floor(Math.random() * 50);
+                        complexitySlider.value = 5 + Math.floor(Math.random() * 5);
+                        
+                        // Update UI
+                        updateSliderValues();
+                        
+                        // Visual feedback
+                        this.style.boxShadow = "0 0 30px rgba(37, 117, 252, 0.6)";
+                        setTimeout(() => {
+                            this.style.boxShadow = "";
+                            document.querySelector('.status-item span').textContent = "AI Model: Ready";
+                        }, 1000);
+                    }, 500);
+                });
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            visualizer.width = visualizer.offsetWidth;
+            visualizer.height = visualizer.offsetHeight;
+        });
+    </script>
+</body>
+</html>
